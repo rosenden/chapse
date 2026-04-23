@@ -28,27 +28,10 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Validate GitLab token
-        run: |
-          if [ -z "${{ secrets.GALACTIK_TOKEN }}" ]; then
-            echo "Missing required secret: GALACTIK_TOKEN"
-            echo "Add it in: Settings > Secrets and variables > Actions."
-            echo "Required scopes: read_repository (+ read_api if npm registry access is needed)."
-            exit 1
-          fi
-
-      - name: Configure GitLab auth for private dependencies
-        run: |
-          git config --global url."https://oauth2:${{ secrets.GALACTIK_TOKEN }}@gitlab.chapsvision.in/".insteadOf "https://gitlab.chapsvision.in/"
-
       - name: Install dependencies
-        env:
-          GALACTIK_TOKEN: ${{ secrets.GALACTIK_TOKEN }}
         run: npm ci
 
       - name: Build
-        env:
-          GALACTIK_TOKEN: ${{ secrets.GALACTIK_TOKEN }}
         run: npm run build
 
       - name: Upload Pages artifact
