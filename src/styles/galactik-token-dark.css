@@ -1,0 +1,162 @@
+/*
+  Dark theme overrides.
+  This file mirrors Galactik token naming for the dark mode palette and
+  centralizes all dark-specific component overrides in one place.
+*/
+
+.app-shell--dark {
+  --stroke-neutral-base: #34454b;
+  --bg-neutral-base: #10161a;
+  --bg-neutral-white: #1b2428;
+  --bg-neutral-disabled: #2a353b;
+  --bg-primary-lighter: #25343a;
+  --bg-primary-light: #314248;
+  --bg-primary-base: #8fb3a8;
+  --bg-primary-hovered: #a5c5bc;
+  --bg-primary-pressed: #6b8f86;
+  --font-primary-dark: #f3fbf8;
+  --font-primary-base: #d7e4df;
+  --font-primary-muted: #9db3ac;
+  --font-neutral-base: #d7e4df;
+  --font-neutral-muted: #8ea59e;
+  --font-neutral-white: #f3fbf8;
+  --stroke-primary-light: #3b5159;
+  --stroke-primary-lighter: #2d3f46;
+  --stroke-primary-base: #6d8f86;
+  --stroke-primary-hovered: #84a99f;
+  --sage-50: #1d282d;
+  --sage-100: #141d21;
+  --sage-400: #8ca8a1;
+  --sage-500: #99b5ad;
+  --sage-600: #a6c1ba;
+  --sage-700: #bdd5ce;
+  --sage-800: #d5e7e1;
+  --sage-900: #e9f4f0;
+  --sage-950: #f5fbf8;
+  --absolute-pure-white: #1f2b30;
+}
+
+.app-shell--dark .app-header {
+  color: var(--font-primary-dark);
+  border-bottom: none;
+}
+
+.app-shell--dark .ds-select-label {
+  color: #c7dad3;
+}
+
+.app-shell--dark .ds-select-trigger {
+  background-color: #1f2b30;
+  border-color: #41565f;
+  color: #e2efea;
+}
+
+.app-shell--dark .ds-select-trigger:hover:not(:disabled),
+.app-shell--dark .ds-select-trigger-open {
+  background-color: #28373d;
+  border-color: #5f7a73;
+}
+
+.app-shell--dark .ds-select-placeholder {
+  color: #8ea8a1;
+}
+
+.app-shell--dark .ds-select-chevron {
+  color: #9bb4ad;
+}
+
+.app-shell--dark .ds-select-menu {
+  background-color: #1f2b30;
+  border-color: #40545d;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 1px 4px rgba(0, 0, 0, 0.22);
+}
+
+.app-shell--dark .ds-select-option {
+  color: #dce8e4;
+}
+
+.app-shell--dark .ds-select-option:hover,
+.app-shell--dark .ds-select-option:focus-visible {
+  background-color: #2b3c42;
+}
+
+.app-shell--dark .ds-select-option-label {
+  color: #e7f2ee;
+}
+
+.app-shell--dark .ds-select-option-sublabel,
+.app-shell--dark .ds-select-option-check,
+.app-shell--dark .ds-select-option-leading-icon,
+.app-shell--dark .ds-select-hint,
+.app-shell--dark .ds-select-empty {
+  color: #9ab2ac;
+}
+
+.app-shell--dark .variant-secondary {
+  color: #dce9e4;
+  border-color: #6e8c84;
+}
+
+.app-shell--dark .variant-secondary:hover:not(:disabled) {
+  background-color: #223238;
+}
+
+.app-shell--dark .variant-secondary:active:not(:disabled) {
+  background-color: #32464d;
+  border-color: #32464d;
+  color: #f3fbf8;
+}
+
+.app-shell--dark .rg-export-menu {
+  background: #1d282d;
+  border-color: #3a4f56;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.42);
+}
+
+.app-shell--dark .rg-export-option {
+  color: #dbe9e4;
+}
+
+.app-shell--dark .rg-export-option:hover {
+  background: #2a3a40;
+}
+
+.app-shell--dark .rg-export-option:focus-visible {
+  outline-color: #bdd5ce;
+  background: #2a3a40;
+}
+
+.app-shell--dark .rg-export-option--active {
+  background: #33474f;
+  color: #f1f8f5;
+}
+
+.app-shell--dark .rg-presets--overlay {
+  background: rgba(29, 40, 45, 0.7);
+  border-color: rgba(121, 152, 143, 0.4);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+}
+
+.app-shell--dark .rg-preset-button.variant-secondary {
+  background: rgba(29, 41, 46, 0.58);
+  border-color: rgba(113, 145, 137, 0.42);
+  color: #d8e7e1;
+}
+
+.app-shell--dark .rg-control-section {
+  background: #1d282d;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+}
+
+.app-shell--dark .rg-stage-surface {
+  border-color: transparent;
+}
+
+.rg-stage-surface--dark {
+  background-color: var(--sage-975);
+  background-image:
+    radial-gradient(130% 130% at 50% 42%, rgba(122, 155, 149, 0.34) 0%, rgba(34, 45, 48, 0.94) 60%, rgba(34, 45, 48, 0.99) 100%),
+    linear-gradient(rgba(255, 255, 255, 0.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.28) 1px, transparent 1px);
+  background-size: auto, 16px 16px, 16px 16px;
+}

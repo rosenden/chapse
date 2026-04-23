@@ -1,0 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+@import 'galactik-design-react/css/galactik-token.css';
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Hanken Grotesk', var(--family-base), Arial, sans-serif;
+  font-size: var(--size-base);
+  color: var(--font-primary-base);
+  background: var(--bg-neutral-base);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── App Shell ─────────────────────────────────────────────── */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg-neutral-base);
+}
+
+/* ─── Header ─────────────────────────────────────────────────── */
+
+.app-header {
+  height: 60px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--sage-100);
+  border-bottom: 1px solid var(--stroke-neutral-base);
+  padding-inline: var(--spacing-xl);
+  z-index: 10;
+}
+
+/* ─── Body ───────────────────────────────────────────────────── */
+
+.app-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ─── Sidebar ────────────────────────────────────────────────── */
+
+.sidebar {
+  flex-shrink: 0;
+  overflow-y: auto;
+  background: var(--sage-100);
+  border-right: 1px solid var(--stroke-neutral-base);
+  transition: width 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: var(--spacing-xl);
+  gap: var(--spacing-xs);
+}
+
+.sidebar--mini     { width: 64px; }
+.sidebar--expanded { width: 240px; }
+
+/* ─── Main ───────────────────────────────────────────────────── */
+
+.main {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--sage-100);
+}
+
+.main-surface {
+  min-height: 100%;
+  margin-inline: 8px;
+  background: var(--bg-neutral-white);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-sm) 0;
+}
+
+/* ─── Page Header ────────────────────────────────────────────── */
+
+.page-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--spacing-md);
+}
+
+.page-header h1 {
+  font-size: var(--h1);
+  font-weight: 700;
+  line-height: var(--line-height-6);
+  color: var(--font-primary-dark);
+}
+
+@media (min-width: 880px) {
+  .main-surface {
+    padding: var(--spacing-md) var(--spacing-md) 0;
+  }
+}
+
+/* ─── Stroke neutral base (not in token file, derived from grey-200) ─ */
+:root {
+  --family-base: 'Hanken Grotesk', Arial, sans-serif;
+  --stroke-neutral-base: var(--grey-200);
+}
