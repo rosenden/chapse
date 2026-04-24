@@ -618,19 +618,19 @@ function parseSvgDimensions(svgContent: string) {
   const svgTagMatch = svgContent.match(/<svg\b[^>]*>/i)
   const svgTag = svgTagMatch?.[0] ?? ''
 
-  const widthMatch = svgTag.match(/\bwidth="([\d.]+)(px)?"/i)
-  const heightMatch = svgTag.match(/\bheight="([\d.]+)(px)?"/i)
-  const viewBoxMatch = svgTag.match(/\bviewBox="([^"]+)"/i)
+  const widthMatch = svgTag.match(/\bwidth=(['"])([\d.]+)(px)?\1/i)
+  const heightMatch = svgTag.match(/\bheight=(['"])([\d.]+)(px)?\1/i)
+  const viewBoxMatch = svgTag.match(/\bviewBox=(['"])([^'"]+)\1/i)
 
-  const width = widthMatch ? Number.parseFloat(widthMatch[1]) : Number.NaN
-  const height = heightMatch ? Number.parseFloat(heightMatch[1]) : Number.NaN
+  const width = widthMatch ? Number.parseFloat(widthMatch[2]) : Number.NaN
+  const height = heightMatch ? Number.parseFloat(heightMatch[2]) : Number.NaN
 
   if (Number.isFinite(width) && Number.isFinite(height)) {
     return { width, height }
   }
 
   if (viewBoxMatch) {
-    const parts = viewBoxMatch[1].trim().split(/\s+/)
+    const parts = viewBoxMatch[2].trim().split(/\s+/)
     if (parts.length === 4) {
       const vbWidth = Number.parseFloat(parts[2])
       const vbHeight = Number.parseFloat(parts[3])
@@ -660,11 +660,19 @@ async function getSvgAssetMeta(url: string): Promise<SvgAssetMeta> {
   return assetMetaCache.get(url)!
 }
 
+export async function getRobotAssetSize(url: string): Promise<{ width: number; height: number }> {
+  const asset = await getSvgAssetMeta(url)
+  return {
+    width: asset.width,
+    height: asset.height,
+  }
+}
+
 function extractSvgBody(raw: string): { defs: string; body: string; rootFill?: string; rootStroke?: string } {
   const svgTagMatch = raw.match(/<svg\b([^>]*)>/i)
   const rootAttrs = svgTagMatch?.[1] ?? ''
-  const rootFill = rootAttrs.match(/\bfill="([^"]+)"/)?.[1]
-  const rootStroke = rootAttrs.match(/\bstroke="([^"]+)"/)?.[1]
+  const rootFill = rootAttrs.match(/\bfill=(['"])([^'"]+)\1/)?.[2]
+  const rootStroke = rootAttrs.match(/\bstroke=(['"])([^'"]+)\1/)?.[2]
 
   // Extract inner content of <defs> blocks only (not the tags themselves)
   const defsContents = [...raw.matchAll(/<defs[^>]*>([\s\S]*?)<\/defs>/gi)].map((m) => m[1])
@@ -682,8 +690,10 @@ function extractSvgBody(raw: string): { defs: string; body: string; rootFill?: s
 function prefixSvgIds(fragment: string, prefix: string): string {
   return fragment
     .replace(/\bid="([^"]+)"/g, `id="${prefix}$1"`)
+    .replace(/\bid='([^']+)'/g, `id='${prefix}$1'`)
     .replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`)
     .replace(/(xlink:href|href)="#([^"]+)"/g, `$1="#${prefix}$2"`)
+    .replace(/(xlink:href|href)='#([^']+)'/g, `$1='#${prefix}$2'`)
 }
 
 interface LayerBounds {

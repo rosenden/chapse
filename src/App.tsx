@@ -33,6 +33,7 @@ import {
   downloadRobotPng,
   downloadRobotSvg,
   ensureAssetKey,
+  getRobotAssetSize,
   getAssetKeys,
 } from './robot/chapse'
 
@@ -664,6 +665,56 @@ export default function App() {
       }),
     [theme, currentConfig],
   )
+
+  useEffect(() => {
+    const uniqueMissingUrls = [...new Set(
+      robotLayers
+        .map((layer) => layer.url)
+        .filter((url) => !assetSizes[url]),
+    )]
+
+    if (uniqueMissingUrls.length === 0) {
+      return
+    }
+
+    let cancelled = false
+
+    Promise.all(
+      uniqueMissingUrls.map(async (url) => {
+        const size = await getRobotAssetSize(url)
+        return { url, size }
+      }),
+    )
+      .then((entries) => {
+        if (cancelled) {
+          return
+        }
+
+        setAssetSizes((previous) => {
+          let changed = false
+          const next = { ...previous }
+
+          for (const entry of entries) {
+            const current = previous[entry.url]
+            if (current && current.width === entry.size.width && current.height === entry.size.height) {
+              continue
+            }
+            next[entry.url] = entry.size
+            changed = true
+          }
+
+          return changed ? next : previous
+        })
+      })
+      .catch(() => {
+        // Keep the img onLoad fallback when fetch metadata fails.
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [robotLayers, assetSizes])
+
   const previewBounds = useMemo(() => {
     let minX: number = 0
     let minY: number = 0

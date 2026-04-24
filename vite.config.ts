@@ -10,6 +10,10 @@ export default defineConfig(({ command }) => {
   return {
     base,
     plugins: [react()],
+    build: {
+      // Keep SVG files external in production so loading/parsing behavior matches dev.
+      assetsInlineLimit: 0,
+    },
     resolve: {
       dedupe: ['react', 'react-dom'],
     },
