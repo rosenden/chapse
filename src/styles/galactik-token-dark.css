@@ -145,7 +145,74 @@
 
 .app-shell--dark .rg-control-section {
   background: #1d282d;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+  border-color: #33464d;
+  box-shadow: none;
+}
+
+.app-shell--dark .rg-section-title {
+  color: #e4f0ec;
+}
+
+.app-shell--dark .rg-section-title .rg-ctrl-icon {
+  color: #c7dad3;
+}
+
+.app-shell--dark .rg-arm-group {
+  background: #222f35;
+  border-color: #425760;
+}
+
+.app-shell--dark .rg-arm-group-label {
+  color: #d8e8e2;
+}
+
+.app-shell--dark .rg-control-section--arms {
+  background: linear-gradient(180deg, #25343a 0%, #1f2c32 100%);
+  border-color: #45616b;
+}
+
+.app-shell--dark .rg-control-section--arms .rg-section-title {
+  color: #f1f8f5;
+}
+
+.app-shell--dark .rg-control-section--arms .rg-section-title .rg-ctrl-icon {
+  color: #d5e6e0;
+}
+
+.app-shell--dark .rg-control-section--arms .rg-arm-group {
+  background: #1a252a;
+  border-color: #3d545d;
+}
+
+.app-shell--dark .rg-mobile-config-trigger {
+  border-color: #88ada3;
+  background: #355048;
+  color: #f3fbf8;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.46);
+}
+
+.app-shell--dark .rg-mobile-drawer-backdrop {
+  background: rgba(3, 8, 9, 0.58);
+}
+
+.app-shell--dark .rg-controls-mobile-title,
+.app-shell--dark .rg-controls-mobile-close {
+  color: #e7f2ee;
+}
+
+.app-shell--dark .rg-controls-mobile-head {
+  border-bottom-color: #3f555d;
+  background: rgba(20, 29, 33, 0.74);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+}
+
+.app-shell--dark .rg-controls-mobile-close.variant-secondary:hover:not(:disabled) {
+  background: #2a3b41;
+}
+
+.app-shell--dark .rg-controls-endmark-logo {
+  opacity: 0.28;
 }
 
 .app-shell--dark .rg-stage-surface {

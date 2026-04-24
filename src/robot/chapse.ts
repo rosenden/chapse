@@ -655,17 +655,30 @@ async function getSvgAssetMeta(url: string): Promise<SvgAssetMeta> {
   return assetMetaCache.get(url)!
 }
 
-function toBase64(text: string) {
-  const bytes = new TextEncoder().encode(text)
-  let binary = ''
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte)
-  }
-  return btoa(binary)
+function extractSvgBody(raw: string): { defs: string; body: string; rootFill?: string; rootStroke?: string } {
+  const svgTagMatch = raw.match(/<svg\b([^>]*)>/i)
+  const rootAttrs = svgTagMatch?.[1] ?? ''
+  const rootFill = rootAttrs.match(/\bfill="([^"]+)"/)?.[1]
+  const rootStroke = rootAttrs.match(/\bstroke="([^"]+)"/)?.[1]
+
+  // Extract inner content of <defs> blocks only (not the tags themselves)
+  const defsContents = [...raw.matchAll(/<defs[^>]*>([\s\S]*?)<\/defs>/gi)].map((m) => m[1])
+  const defs = defsContents.join('\n')
+
+  const body = raw
+    .replace(/<\?xml[^?]*\?>/gi, '')
+    .replace(/<svg\b[^>]*>/i, '')
+    .replace(/<\/svg>\s*$/i, '')
+    .replace(/<defs[^>]*>[\s\S]*?<\/defs>/gi, '')
+    .trim()
+  return { defs, body, rootFill, rootStroke }
 }
 
-function toDataUri(svgContent: string) {
-  return `data:image/svg+xml;base64,${toBase64(svgContent)}`
+function prefixSvgIds(fragment: string, prefix: string): string {
+  return fragment
+    .replace(/\bid="([^"]+)"/g, `id="${prefix}$1"`)
+    .replace(/url\(#([^)]+)\)/g, `url(#${prefix}$1)`)
+    .replace(/(xlink:href|href)="#([^"]+)"/g, `$1="#${prefix}$2"`)
 }
 
 interface LayerBounds {
@@ -746,24 +759,42 @@ export async function composeRobotSvg(layers: RobotLayer[]) {
   const svgWidth = maxX - minX
   const svgHeight = maxY - minY
 
-  const layerMarkup = layerEntries.map(({ layer, asset }) => {
-    const dataUri = toDataUri(asset.raw)
+  const allDefs: string[] = []
+
+  const layerMarkup = layerEntries.map(({ layer, asset }, index) => {
+    const prefix = `l${index}-`
+    const { defs, body, rootFill, rootStroke } = extractSvgBody(asset.raw)
+
+    if (defs) allDefs.push(prefixSvgIds(defs, prefix))
+
     const translatedX = layer.x - minX
     const translatedY = layer.y - minY
     const opacity = layer.opacity != null ? ` opacity="${layer.opacity}"` : ''
-    const transform =
-      layer.rotation != null
-        ? ` transform="rotate(${layer.rotation} ${translatedX + (layer.rotationOriginX ?? asset.width / 2)} ${translatedY + (layer.rotationOriginY ?? asset.height / 2)})"`
-        : ''
 
-    return `<image href="${dataUri}" x="${translatedX}" y="${translatedY}" width="${asset.width}" height="${asset.height}"${opacity}${transform}/>`
+    // SVG transforms apply right-to-left: rotate(local origin) then translate to canvas position.
+    const transforms: string[] = [`translate(${translatedX} ${translatedY})`]
+    if (layer.rotation != null) {
+      const ox = layer.rotationOriginX ?? asset.width / 2
+      const oy = layer.rotationOriginY ?? asset.height / 2
+      transforms.push(`rotate(${layer.rotation} ${ox} ${oy})`)
+    }
+
+    const transform = ` transform="${transforms.join(' ')}"`
+    // Propagate root SVG presentation attrs (e.g. fill="none") so descendants inherit them correctly
+    const fillAttr = rootFill != null ? ` fill="${rootFill}"` : ''
+    const strokeAttr = rootStroke != null ? ` stroke="${rootStroke}"` : ''
+    return `<g${transform}${opacity}${fillAttr}${strokeAttr}>\n${prefixSvgIds(body, prefix)}\n</g>`
   })
 
+  const defsBlock = allDefs.length > 0 ? `<defs>\n${allDefs.join('\n')}\n</defs>\n` : ''
+
+  const svgDisplayScale = 4
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">`,
+    `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${svgWidth * svgDisplayScale}" height="${svgHeight * svgDisplayScale}" viewBox="0 0 ${svgWidth} ${svgHeight}">`,
+    defsBlock,
     ...layerMarkup,
     '</svg>',
-  ].join('')
+  ].join('\n')
 }
 
 function sanitizeFilename(name: string) {
@@ -810,7 +841,7 @@ export async function downloadRobotPng(layers: RobotLayer[], robotName: string) 
 
     const exportWidth = image.naturalWidth || ROBOT_CANVAS.width
     const exportHeight = image.naturalHeight || ROBOT_CANVAS.height
-    const scale = 4
+    const scale = 20
     const canvas = document.createElement('canvas')
     canvas.width = exportWidth * scale
     canvas.height = exportHeight * scale

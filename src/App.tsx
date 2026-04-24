@@ -1,12 +1,23 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type SyntheticEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode, type SyntheticEvent } from 'react'
 import { CircleFlag } from 'react-circle-flags'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+  faCircleXmark,
+  faFloppyDisk,
+  faHandPointLeft,
+  faHandPointRight,
+  faHandshakeSimple,
+  faMoon,
+  faSun,
+} from '@fortawesome/free-regular-svg-icons'
+import { faGhost, faRobot, faWind } from '@fortawesome/free-solid-svg-icons'
 import { AppShell } from './components/layout'
 import { SplitButton } from 'galactik-design-react/components/atoms'
-import Tab from 'galactik-design-react/components/electrons/Tab/Tab'
 import {
   Button,
   Select,
   Switch,
+  Tab,
 } from 'galactik-design-react/components/electrons'
 import './styles/robot-playground.css'
 import logoChapsvision from './assets/logo-chaspvision/logo-chapsvision-sauge.png'
@@ -31,6 +42,10 @@ type Locale = 'en' | 'fr'
 
 interface LocalizedText {
   appTitle: string
+  configButton: string
+  configPanelTitle: string
+  closeConfig: string
+  closeConfigAria: string
   saveAction: string
   saveFormatAria: string
   saveFormatsMenuAria: string
@@ -55,11 +70,19 @@ interface LocalizedText {
   rightSourceLabel: string
   rightArmLabel: string
   presetAriaLabel: (presetId: string) => string
+  sectionAppearance: string
+  sectionFace: string
+  sectionArms: string
+  sectionEffects: string
 }
 
 const I18N: Record<Locale, LocalizedText> = {
   en: {
     appTitle: 'Chaps-e Generator',
+    configButton: 'Configuration',
+    configPanelTitle: 'Configuration',
+    closeConfig: 'Close configuration',
+    closeConfigAria: 'Close configuration panel',
     saveAction: 'Save',
     saveFormatAria: 'Choose save format',
     saveFormatsMenuAria: 'Save formats',
@@ -84,9 +107,17 @@ const I18N: Record<Locale, LocalizedText> = {
     rightSourceLabel: 'Right arm source',
     rightArmLabel: 'Right arm pose',
     presetAriaLabel: (presetId) => `Preset ${presetId}`,
+    sectionAppearance: 'Appearance',
+    sectionFace: 'Face',
+    sectionArms: 'Arms',
+    sectionEffects: 'Effects',
   },
   fr: {
     appTitle: 'Chaps-e Generator',
+    configButton: 'Configuration',
+    configPanelTitle: 'Configuration',
+    closeConfig: 'Fermer la configuration',
+    closeConfigAria: 'Fermer le panneau de configuration',
     saveAction: 'Sauvegarder',
     saveFormatAria: 'Choisir le format de sauvegarde',
     saveFormatsMenuAria: 'Formats de sauvegarde',
@@ -111,6 +142,10 @@ const I18N: Record<Locale, LocalizedText> = {
     rightSourceLabel: 'Source bras droit',
     rightArmLabel: 'Pose bras droit',
     presetAriaLabel: (presetId) => `Preset ${presetId}`,
+    sectionAppearance: 'Apparence',
+    sectionFace: 'Visage',
+    sectionArms: 'Bras',
+    sectionEffects: 'Effets',
   },
 }
 
@@ -273,13 +308,47 @@ function getLayerBounds(layer: RobotLayer, size: AssetSize): LayerBounds {
 }
 
 function SaveDiskIcon() {
+  return <FontAwesomeIcon icon={faFloppyDisk} className="rg-save-icon" aria-hidden="true" />
+}
+
+function IconSun() {
+  return <FontAwesomeIcon icon={faSun} className="rg-ctrl-icon" aria-hidden="true" />
+}
+
+function IconMoon() {
+  return <FontAwesomeIcon icon={faMoon} className="rg-ctrl-icon" aria-hidden="true" />
+}
+
+function IconFace() {
+  return <FontAwesomeIcon icon={faRobot} className="rg-ctrl-icon" aria-hidden="true" />
+}
+
+function IconArms() {
+  return <FontAwesomeIcon icon={faHandshakeSimple} className="rg-ctrl-icon" aria-hidden="true" />
+}
+
+function IconEffects() {
+  return <FontAwesomeIcon icon={faWind} className="rg-ctrl-icon" aria-hidden="true" />
+}
+
+function IconShadow() {
+  return <FontAwesomeIcon icon={faGhost} className="rg-ctrl-icon" aria-hidden="true" />
+}
+
+function IconLeftArm() {
+  return <FontAwesomeIcon icon={faHandPointLeft} className="rg-ctrl-icon" aria-hidden="true" />
+}
+
+function IconRightArm() {
+  return <FontAwesomeIcon icon={faHandPointRight} className="rg-ctrl-icon" aria-hidden="true" />
+}
+
+function SectionTitle({ icon, label }: { icon: ReactNode; label: string }) {
   return (
-    <svg className="rg-save-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path
-        fill="currentColor"
-        d="M4 3h12.586a2 2 0 0 1 1.414.586l2.414 2.414A2 2 0 0 1 21 7.414V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm2 2v5h11V6.243L15.757 5H6Zm0 15h12V12H6v8Zm2-1v-5h8v5H8Zm1-13h5v3H9V6Z"
-      />
-    </svg>
+    <div className="rg-section-title" aria-hidden="true">
+      {icon}
+      <span>{label}</span>
+    </div>
   )
 }
 
@@ -332,6 +401,7 @@ export default function App() {
   const ROBOT_NAME = 'Chaps-e'
   const [locale, setLocale] = useState<Locale>('en')
   const [theme, setTheme] = useState<ChapseTheme>('light')
+  const [mobileConfigOpen, setMobileConfigOpen] = useState(false)
   const [selectedPresetId, setSelectedPresetId] = useState<string>('01')
   const [armMode, setArmMode] = useState<ArmMode>('split')
   const [head, setHead] = useState(() => ensureAssetKey('light', 'head', 'default'))
@@ -365,6 +435,39 @@ export default function App() {
     window.addEventListener('pointerdown', handlePointerDown)
     return () => window.removeEventListener('pointerdown', handlePointerDown)
   }, [exportMenuOpen])
+
+  useEffect(() => {
+    if (!mobileConfigOpen) {
+      return
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 879px)')
+    if (!mediaQuery.matches) {
+      return
+    }
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileConfigOpen])
+
+  useEffect(() => {
+    if (!mobileConfigOpen) {
+      return
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setMobileConfigOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [mobileConfigOpen])
 
   const headOptions = useMemo(
     () =>
@@ -750,128 +853,184 @@ export default function App() {
           </div>
         </article>
 
-        <article className="rg-controls">
-          <div className="rg-control-grid">
-            <div className="rg-control-section">
-              <div className="rg-theme-switch-row">
-                <span className="rg-theme-switch-label">
-                  {text.themeLabel} {themeStateLabel}
-                </span>
-                <Switch
-                  size="small"
-                  checked={theme === 'dark'}
-                  aria-label={text.toggleThemeAria(themeTargetLabel)}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                    setTheme(event.target.checked ? 'dark' : 'light')
-                  }
-                />
-              </div>
-            </div>
+        <button
+          type="button"
+          className={`rg-mobile-config-trigger${mobileConfigOpen ? ' rg-mobile-config-trigger--hidden' : ''}`}
+          onClick={() => setMobileConfigOpen(true)}
+        >
+          {text.configButton}
+        </button>
 
-            <div className="rg-control-section">
-              <Select
-                label={text.headLabel}
-                size="md"
-                options={headOptions}
-                value={safeHead}
-                onChange={handleHeadChange}
-              />
+        <button
+          type="button"
+          aria-label={text.closeConfigAria}
+          className={`rg-mobile-drawer-backdrop${mobileConfigOpen ? ' rg-mobile-drawer-backdrop--open' : ''}`}
+          onClick={() => setMobileConfigOpen(false)}
+        />
 
-              <Select
-                label={text.eyesLabel}
-                size="md"
-                options={eyesOptions}
-                value={safeEyes}
-                onChange={handleEyesChange}
-              />
-
-              <Select
-                label={text.hatLabel}
-                size="md"
-                options={hatOptions}
-                value={safeHat}
-                onChange={setHat}
-              />
-            </div>
-
-            <div className="rg-control-section">
-              <div className="rg-arm-mode-tabs" role="tablist" aria-label={text.armModeAriaLabel}>
-                <Tab
-                  variant="secondary"
-                  size="md"
-                  active={armMode === 'split'}
-                  onClick={() => setArmMode('split')}
-                >
-                  {text.armSplitLabel}
-                </Tab>
-                <Tab
-                  variant="secondary"
-                  size="md"
-                  active={armMode === 'arms_object'}
-                  onClick={() => setArmMode('arms_object')}
-                >
-                  {text.armObjectLabel}
-                </Tab>
+        <article className={`rg-controls${mobileConfigOpen ? ' rg-controls--mobile-open' : ''}`}>
+          <div className="rg-controls-mobile-head">
+            <h2 className="rg-controls-mobile-title">{text.configPanelTitle}</h2>
+            <Button
+              variant="secondary"
+              size="sm"
+              iconOnly
+              icon={<FontAwesomeIcon icon={faCircleXmark} aria-hidden="true" />}
+              className="rg-controls-mobile-close"
+              aria-label={text.closeConfigAria}
+              onClick={() => setMobileConfigOpen(false)}
+            />
+          </div>
+          <div className="rg-controls-content">
+            <div className="rg-control-grid">
+              <div className="rg-control-section">
+                <SectionTitle icon={theme === 'dark' ? <IconMoon /> : <IconSun />} label={text.sectionAppearance} />
+                <div className="rg-theme-switch-row">
+                  <span className="rg-theme-switch-label">
+                    {text.themeLabel} — {themeStateLabel}
+                  </span>
+                  <Switch
+                    size="small"
+                    checked={theme === 'dark'}
+                    aria-label={text.toggleThemeAria(themeTargetLabel)}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) =>
+                      setTheme(event.target.checked ? 'dark' : 'light')
+                    }
+                  />
+                </div>
               </div>
 
-              {armMode === 'split' ? (
-                <>
-                  <Select
-                    label={text.leftSourceLabel}
-                    size="md"
-                    options={leftSourceOptions}
-                    value={leftSource}
-                    onChange={handleLeftSourceChange}
-                  />
-                  <Select
-                    label={text.leftArmLabel}
-                    size="md"
-                    options={leftOptions}
-                    value={safeLeftAsset}
-                    onChange={setLeftAsset}
-                  />
-
-                  <Select
-                    label={text.rightSourceLabel}
-                    size="md"
-                    options={rightSourceOptions}
-                    value={rightSource}
-                    onChange={handleRightSourceChange}
-                  />
-                  <Select
-                    label={text.rightArmLabel}
-                    size="md"
-                    options={rightOptions}
-                    value={safeRightAsset}
-                    onChange={setRightAsset}
-                  />
-                </>
-              ) : (
+              <div className="rg-control-section">
+                <SectionTitle icon={<IconFace />} label={text.sectionFace} />
                 <Select
-                  label={text.armObjectLabel}
+                  label={text.headLabel}
                   size="md"
-                  options={armsObjectOptions}
-                  value={safeArmsObject}
-                  onChange={setArmsObject}
+                  options={headOptions}
+                  value={safeHead}
+                  onChange={handleHeadChange}
                 />
-              )}
-            </div>
 
-            <div className="rg-control-section">
-              <div className="rg-theme-switch-row">
-                <span className="rg-theme-switch-label">
-                  {text.shadowLabel} {shadowStateLabel}
-                </span>
-                <Switch
-                  size="small"
-                  checked={showShadow}
-                  aria-label={text.toggleShadowAria(shadowTargetLabel)}
-                  onChange={(event: ChangeEvent<HTMLInputElement>) => setShowShadow(event.target.checked)}
+                <Select
+                  label={text.eyesLabel}
+                  size="md"
+                  options={eyesOptions}
+                  value={safeEyes}
+                  onChange={handleEyesChange}
+                />
+
+                <Select
+                  label={text.hatLabel}
+                  size="md"
+                  options={hatOptions}
+                  value={safeHat}
+                  onChange={setHat}
                 />
               </div>
+
+              <div className="rg-control-section rg-control-section--arms">
+                <SectionTitle icon={<IconArms />} label={text.sectionArms} />
+                <div className="rg-arm-mode-tabs" role="tablist" aria-label={text.armModeAriaLabel}>
+                  <Tab
+                    variant="secondary"
+                    size="md"
+                    active={armMode === 'split'}
+                    onClick={() => setArmMode('split')}
+                  >
+                    {text.armSplitLabel}
+                  </Tab>
+                  <Tab
+                    variant="secondary"
+                    size="md"
+                    active={armMode === 'arms_object'}
+                    onClick={() => setArmMode('arms_object')}
+                  >
+                    {text.armObjectLabel}
+                  </Tab>
+                </div>
+
+                {armMode === 'split' ? (
+                  <>
+                    <div className="rg-arm-group">
+                      <div className="rg-arm-group-header">
+                        <IconLeftArm />
+                        <span className="rg-arm-group-label">{text.leftSourceLabel}</span>
+                      </div>
+                      <Select
+                        size="md"
+                        options={leftSourceOptions}
+                        value={leftSource}
+                        onChange={handleLeftSourceChange}
+                      />
+                      <Select
+                        label={text.leftArmLabel}
+                        size="md"
+                        options={leftOptions}
+                        value={safeLeftAsset}
+                        onChange={setLeftAsset}
+                      />
+                    </div>
+
+                    <div className="rg-arm-group">
+                      <div className="rg-arm-group-header">
+                        <IconRightArm />
+                        <span className="rg-arm-group-label">{text.rightSourceLabel}</span>
+                      </div>
+                      <Select
+                        size="md"
+                        options={rightSourceOptions}
+                        value={rightSource}
+                        onChange={handleRightSourceChange}
+                      />
+                      <Select
+                        label={text.rightArmLabel}
+                        size="md"
+                        options={rightOptions}
+                        value={safeRightAsset}
+                        onChange={setRightAsset}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <Select
+                    label={text.armObjectLabel}
+                    size="md"
+                    options={armsObjectOptions}
+                    value={safeArmsObject}
+                    onChange={setArmsObject}
+                  />
+                )}
+              </div>
+
+              <div className="rg-control-section">
+                <SectionTitle icon={<IconEffects />} label={text.sectionEffects} />
+                <div className="rg-theme-switch-row">
+                  <span className="rg-theme-switch-label rg-theme-switch-label--with-icon">
+                    <IconShadow />
+                    {text.shadowLabel} — {shadowStateLabel}
+                  </span>
+                  <Switch
+                    size="small"
+                    checked={showShadow}
+                    aria-label={text.toggleShadowAria(shadowTargetLabel)}
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => setShowShadow(event.target.checked)}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="rg-controls-mobile-footer">
+              <Button
+                size="md"
+                variant="secondary"
+                className="rg-controls-mobile-close-action"
+                onClick={() => setMobileConfigOpen(false)}
+              >
+                {text.closeConfig}
+              </Button>
+            </div>
+            <div className="rg-controls-endmark" aria-hidden="true">
+              <img className="rg-controls-endmark-logo" src={iconChapsvision} alt="" />
             </div>
           </div>
-
         </article>
       </section>
     </AppShell>
