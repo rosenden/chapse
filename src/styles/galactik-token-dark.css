@@ -143,6 +143,10 @@
   color: #d8e7e1;
 }
 
+.app-shell--dark .rg-presets-overlay-row::after {
+  background: rgba(215, 228, 223, 0.4);
+}
+
 .app-shell--dark .rg-control-section {
   background: #1d282d;
   border-color: #33464d;

@@ -10,7 +10,7 @@ import {
   faMoon,
   faSun,
 } from '@fortawesome/free-regular-svg-icons'
-import { faGhost, faRobot, faWind } from '@fortawesome/free-solid-svg-icons'
+import { faGhost, faRobot, faRotateLeft, faWind } from '@fortawesome/free-solid-svg-icons'
 import { AppShell } from './components/layout'
 import { SplitButton } from 'galactik-design-react/components/atoms'
 import {
@@ -40,6 +40,19 @@ type ExportKind = 'idle' | 'busy' | 'success' | 'error'
 type ExportFormat = 'png' | 'svg'
 type Locale = 'en' | 'fr'
 
+interface RobotConfigComparable {
+  head: string
+  eyes: string
+  hat: string
+  showShadow?: boolean
+  armMode: ArmMode
+  leftSource: 'arm_left' | 'arm_left_object'
+  leftAsset: string
+  rightSource: 'arm_right' | 'arm_right_object'
+  rightAsset: string
+  armsObject: string
+}
+
 interface LocalizedText {
   appTitle: string
   configButton: string
@@ -47,6 +60,8 @@ interface LocalizedText {
   closeConfig: string
   closeConfigAria: string
   saveAction: string
+  resetAction: string
+  resetPresetAriaLabel: string
   saveFormatAria: string
   saveFormatsMenuAria: string
   languageAriaLabel: string
@@ -84,6 +99,8 @@ const I18N: Record<Locale, LocalizedText> = {
     closeConfig: 'Close configuration',
     closeConfigAria: 'Close configuration panel',
     saveAction: 'Save',
+    resetAction: 'Reset',
+    resetPresetAriaLabel: 'Reset robot to default preset',
     saveFormatAria: 'Choose save format',
     saveFormatsMenuAria: 'Save formats',
     languageAriaLabel: 'Select language',
@@ -119,6 +136,8 @@ const I18N: Record<Locale, LocalizedText> = {
     closeConfig: 'Fermer la configuration',
     closeConfigAria: 'Fermer le panneau de configuration',
     saveAction: 'Sauvegarder',
+    resetAction: 'Reinitialiser',
+    resetPresetAriaLabel: 'Reinitialiser Chaps-e sur le preset par defaut',
     saveFormatAria: 'Choisir le format de sauvegarde',
     saveFormatsMenuAria: 'Formats de sauvegarde',
     languageAriaLabel: 'Selectionner la langue',
@@ -246,6 +265,21 @@ function localizeOptionLabel(locale: Locale, value: string) {
   return OPTION_LABELS[locale][value] ?? humanizeToken(value)
 }
 
+function isSameRobotConfig(a: RobotConfigComparable, b: RobotConfigComparable) {
+  return (
+    a.head === b.head &&
+    a.eyes === b.eyes &&
+    a.hat === b.hat &&
+    (a.showShadow ?? false) === (b.showShadow ?? false) &&
+    a.armMode === b.armMode &&
+    a.leftSource === b.leftSource &&
+    a.leftAsset === b.leftAsset &&
+    a.rightSource === b.rightSource &&
+    a.rightAsset === b.rightAsset &&
+    a.armsObject === b.armsObject
+  )
+}
+
 interface AppHeaderProps {
   locale: Locale
   text: LocalizedText
@@ -341,6 +375,10 @@ function IconLeftArm() {
 
 function IconRightArm() {
   return <FontAwesomeIcon icon={faHandPointRight} className="rg-ctrl-icon" aria-hidden="true" />
+}
+
+function IconReset() {
+  return <FontAwesomeIcon icon={faRotateLeft} className="rg-reset-icon" aria-hidden="true" />
 }
 
 function SectionTitle({ icon, label }: { icon: ReactNode; label: string }) {
@@ -577,34 +615,37 @@ export default function App() {
       safeArmsObject,
     ],
   )
+  const selectedPreset = useMemo(
+    () => ROBOT_PRESETS.find((entry) => entry.id === selectedPresetId) ?? null,
+    [selectedPresetId],
+  )
+  const defaultPreset = useMemo(
+    () => ROBOT_PRESETS.find((entry) => entry.id === '01') ?? ROBOT_PRESETS[0] ?? null,
+    [],
+  )
+  const matchesSelectedPreset = useMemo(
+    () => (selectedPreset ? isSameRobotConfig(selectedPreset.config, currentConfig) : false),
+    [selectedPreset, currentConfig],
+  )
+  const isDefaultRobotConfig = useMemo(
+    () => (defaultPreset ? isSameRobotConfig(defaultPreset.config, currentConfig) : false),
+    [defaultPreset, currentConfig],
+  )
 
   useEffect(() => {
     if (!selectedPresetId) {
       return
     }
 
-    const preset = ROBOT_PRESETS.find((entry) => entry.id === selectedPresetId)
-    if (!preset) {
+    if (!selectedPreset) {
       setSelectedPresetId('')
       return
     }
 
-    const matchesSelectedPreset =
-      preset.config.head === currentConfig.head &&
-      preset.config.eyes === currentConfig.eyes &&
-      preset.config.hat === currentConfig.hat &&
-      (preset.config.showShadow ?? false) === currentConfig.showShadow &&
-      preset.config.armMode === currentConfig.armMode &&
-      preset.config.leftSource === currentConfig.leftSource &&
-      preset.config.leftAsset === currentConfig.leftAsset &&
-      preset.config.rightSource === currentConfig.rightSource &&
-      preset.config.rightAsset === currentConfig.rightAsset &&
-      preset.config.armsObject === currentConfig.armsObject
-
     if (!matchesSelectedPreset) {
       setSelectedPresetId('')
     }
-  }, [selectedPresetId, currentConfig])
+  }, [selectedPresetId, selectedPreset, matchesSelectedPreset])
 
   const robotLayers = useMemo(
     () =>
@@ -733,6 +774,13 @@ export default function App() {
     setSelectedPresetId(preset.id)
   }
 
+  function resetToDefaultPreset() {
+    if (!defaultPreset) {
+      return
+    }
+    applyPreset(defaultPreset.id)
+  }
+
   async function onExport(format: ExportFormat) {
     setExportKind('busy')
     try {
@@ -769,22 +817,40 @@ export default function App() {
       <section className="rg-workspace">
         <article className="rg-stage">
           <div className={`rg-stage-surface rg-stage-surface--${theme}`}>
-            <div className="rg-presets rg-presets--overlay">
-              {ROBOT_PRESETS.map((preset) => (
+            <div className="rg-presets-overlay-row">
+              <div className="rg-presets rg-presets--overlay">
+                {ROBOT_PRESETS.map((preset) => (
+                  <Button
+                    key={preset.id}
+                    className="rg-preset-button"
+                    variant={selectedPresetId === preset.id ? 'primary' : 'secondary'}
+                    size="md"
+                    aria-label={text.presetAriaLabel(preset.id)}
+                    onClick={() => applyPreset(preset.id)}
+                  >
+                    <span className="rg-preset-icon" aria-hidden="true">
+                      {preset.label}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+            {!isDefaultRobotConfig && (
+              <div className="rg-reset-floating">
                 <Button
-                  key={preset.id}
-                  className="rg-preset-button"
-                  variant={selectedPresetId === preset.id ? 'primary' : 'secondary'}
+                  className="rg-preset-reset-button"
+                  variant="secondary"
                   size="md"
-                  aria-label={text.presetAriaLabel(preset.id)}
-                  onClick={() => applyPreset(preset.id)}
+                  aria-label={text.resetPresetAriaLabel}
+                  onClick={resetToDefaultPreset}
                 >
-                  <span className="rg-preset-icon" aria-hidden="true">
-                    {preset.label}
+                  <span className="rg-reset-label">
+                    <IconReset />
+                    <span>{text.resetAction}</span>
                   </span>
                 </Button>
-              ))}
-            </div>
+              </div>
+            )}
             <div className="rg-export-floating" ref={stageExportRef}>
               <SplitButton
                 variant="accent"

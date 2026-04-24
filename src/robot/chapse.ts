@@ -156,6 +156,9 @@ interface HatPlacement {
 interface HatSize {
   width: number
   height: number
+  // Y in hat SVG at which the inner band contacts the head (sit line).
+  // Used as placement reference and rotation origin for tilted head.
+  sitY: number
 }
 
 const EYE_SIZES: Record<string, EyeSize> = {
@@ -170,11 +173,12 @@ const EYE_SIZES: Record<string, EyeSize> = {
 }
 
 const HAT_SIZES: Record<string, HatSize> = {
-  cap: { width: 60, height: 26 },
-  cap_detective: { width: 60, height: 27 },
-  hat_hard: { width: 60, height: 27 },
-  hat_wizard: { width: 75, height: 41 },
-  hate: { width: 60, height: 23 },
+  // sitY: Y within the hat SVG that aligns with the mounting anchor (Figma: component bottom = top(-5.86) + height(22.805) = 16.945).
+  cap:           { width: 60, height: 26, sitY: 22.805 },
+  cap_detective: { width: 60, height: 27, sitY: 22.805 },
+  hat_hard:      { width: 60, height: 27, sitY: 22.805 },
+  hat_wizard:    { width: 75, height: 41, sitY: 35.405 },
+  hate:          { width: 60, height: 23, sitY: 22.805 },
 }
 
 const EYE_ANCHORS = {
@@ -184,9 +188,10 @@ const EYE_ANCHORS = {
 } as const
 
 const HAT_ANCHORS = {
-  // Derived from Figma reference compositions (default + tilted head alignment).
-  default: { x: 43.367, y: 5.543 },
-  tilted: { x: 41.739, y: 5.73, rotation: -9.153 },
+  // Canvas Y where each hat's sitY lands. Derived from Figma: head div at y=0, hat component top=-5.86, height=22.805 → bottom=16.945.
+  // formula: canvas_y = anchor.y - hatSize.sitY
+  default: { x: 43.367, y: 16.945 },
+  tilted:  { x: 41.739, y: 17.132, rotation: -9.153 },
 } as const
 
 function createShadowDataUri(fill: string, opacity?: number) {
@@ -235,16 +240,16 @@ function getHatPlacement(hat: string, isHeadTilted: boolean): HatPlacement {
   if (!isHeadTilted) {
     return {
       x: HAT_ANCHORS.default.x - hatSize.width / 2,
-      y: HAT_ANCHORS.default.y - hatSize.height / 2,
+      y: HAT_ANCHORS.default.y - hatSize.sitY,
     }
   }
 
   return {
     x: HAT_ANCHORS.tilted.x - hatSize.width / 2,
-    y: HAT_ANCHORS.tilted.y - hatSize.height / 2,
+    y: HAT_ANCHORS.tilted.y - hatSize.sitY,
     rotation: HAT_ANCHORS.tilted.rotation,
     rotationOriginX: hatSize.width / 2,
-    rotationOriginY: hatSize.height / 2,
+    rotationOriginY: hatSize.sitY,
   }
 }
 

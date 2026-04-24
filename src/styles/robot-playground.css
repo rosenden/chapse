@@ -62,6 +62,19 @@
   flex-shrink: 0;
 }
 
+.rg-reset-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rg-reset-icon {
+  width: 13px;
+  height: 13px;
+  display: block;
+  flex-shrink: 0;
+}
+
 .rg-language-wrap {
   position: relative;
   width: 136px;
@@ -151,22 +164,24 @@
   flex: 1;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .rg-stage {
   display: flex;
-  height: 100%;
+  flex: 1;
   margin-top: var(--spacing-sm);
   margin-bottom: 0;
   min-height: 0;
 }
 
 .rg-controls {
-  display: grid;
-  gap: var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   padding-inline: var(--spacing-sm);
-  align-self: start;
-  align-content: start;
+  min-height: 0;
+  overflow: hidden;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -180,6 +195,19 @@
 .rg-controls-content {
   display: grid;
   gap: var(--spacing-sm);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.rg-controls-content::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 .rg-controls-mobile-head,
@@ -214,12 +242,18 @@
 
 .rg-controls-endmark {
   display: none;
+  flex: 0 0 auto;
+  align-items: center;
 }
 
 .rg-controls-endmark-logo {
   display: block;
+  flex: 0 0 auto;
   width: 44px;
-  height: auto;
+  height: 44px;
+  max-width: none;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
   opacity: 0.22;
 }
 
@@ -232,7 +266,7 @@
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   padding: var(--spacing-sm);
   border: 1px solid var(--stroke-neutral-base);
-  overflow: auto;
+  overflow: hidden;
   display: grid;
   place-items: center;
 }
@@ -313,19 +347,42 @@
   flex-wrap: nowrap;
   gap: var(--spacing-xs);
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
-.rg-presets--overlay {
+.rg-presets-overlay-row {
   position: absolute;
   top: calc(var(--spacing-md) + 4px);
   left: var(--spacing-md);
   z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  max-width: calc(100% - (var(--spacing-md) * 2));
+}
+
+.rg-presets--overlay {
   padding: var(--spacing-3xs);
   border-radius: var(--radius-2xl);
   background: rgba(232, 241, 237, 0.66);
   border: 1px solid rgba(120, 151, 142, 0.34);
   backdrop-filter: blur(8px);
   box-shadow: 0 8px 24px rgba(20, 36, 32, 0.16);
+  min-width: 0;
+}
+
+.rg-preset-reset-button {
+  flex: 0 0 auto;
+}
+
+.rg-reset-floating {
+  position: absolute;
+  left: var(--spacing-md);
+  bottom: var(--spacing-md);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
 }
 
 .rg-export-floating {
@@ -492,6 +549,9 @@
 
 @media (max-width: 879px) {
   .rg-workspace {
+    --rg-mobile-config-width: clamp(122px, 34vw, 168px);
+    --rg-mobile-separator-gap: 12px;
+    --rg-mobile-bottom-offset: calc(12px + env(safe-area-inset-bottom, 0px));
     gap: 0;
   }
 
@@ -503,6 +563,55 @@
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 
+  .rg-presets-overlay-row {
+    top: auto;
+    left: var(--spacing-sm);
+    right: calc(var(--spacing-sm) + var(--rg-mobile-config-width) + var(--rg-mobile-separator-gap));
+    bottom: var(--rg-mobile-bottom-offset);
+    max-width: none;
+    width: auto;
+    display: flex;
+    min-width: 0;
+  }
+
+  .rg-presets-overlay-row::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: calc(-1 * (var(--rg-mobile-separator-gap) / 2));
+    transform: translate(50%, -50%);
+    width: 1px;
+    height: 24px;
+    background: rgba(95, 123, 116, 0.44);
+    pointer-events: none;
+  }
+
+  .rg-presets--overlay {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    padding-inline: var(--spacing-xs);
+  }
+
+  .rg-presets {
+    width: 100%;
+    max-width: none;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .rg-presets::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+  }
+
+  .rg-reset-floating {
+    left: var(--spacing-sm);
+    top: calc(var(--spacing-md) + 4px);
+    bottom: auto;
+  }
+
   .rg-canvas-shell {
     --preview-scale: 3.8;
   }
@@ -512,10 +621,13 @@
     align-items: center;
     justify-content: center;
     position: fixed;
-    left: 50%;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    transform: translateX(-50%);
+    left: auto;
+    right: var(--spacing-sm);
+    bottom: var(--rg-mobile-bottom-offset);
+    transform: none;
     z-index: 54;
+    width: var(--rg-mobile-config-width);
+    min-width: 0;
     border: 1px solid var(--stroke-primary-base);
     border-radius: 999px;
     background: var(--bg-primary-base);
@@ -533,13 +645,13 @@
   .rg-mobile-config-trigger--hidden {
     opacity: 0;
     pointer-events: none;
-    transform: translateX(-50%) translateY(8px);
+    transform: translateY(8px);
   }
 
   .rg-mobile-drawer-backdrop {
     display: block;
     position: fixed;
-    inset: calc(60px + 16px + env(safe-area-inset-top, 0px)) 16px 0 16px;
+    inset: 0;
     z-index: 55;
     border: 0;
     background: rgba(17, 24, 22, 0.4);
@@ -555,10 +667,10 @@
 
   .rg-controls {
     position: fixed;
-    top: calc(60px + 16px + env(safe-area-inset-top, 0px));
-    right: 16px;
+    top: calc(16px + env(safe-area-inset-top, 0px));
+    right: 0;
     bottom: 0;
-    left: 16px;
+    left: 0;
     z-index: 56;
     margin: 0;
     padding: 0;
@@ -569,9 +681,7 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain;
+    overflow: hidden;
     transform: translateY(calc(100% + 24px));
     opacity: 0;
     pointer-events: none;
@@ -600,7 +710,10 @@
   }
 
   .rg-controls-content {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     padding: var(--spacing-sm);
     padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom, 0px));
   }
@@ -649,15 +762,18 @@
     top: var(--spacing-sm);
     max-height: calc(100dvh - 60px - var(--spacing-sm));
     min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
     padding-block: var(--spacing-sm);
   }
 
   .rg-controls-content {
     display: grid;
     gap: var(--spacing-sm);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .rg-stage {
